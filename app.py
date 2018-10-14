@@ -3,7 +3,6 @@ from flask import Flask,request,jsonify
 from flask import render_template
 
 app = Flask(__name__)
-app.debug = True
 
 
 
