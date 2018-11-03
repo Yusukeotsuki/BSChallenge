@@ -9,6 +9,8 @@ import time
 import os
 from bottle import route, run
 from flask import Flask, render_template, request
+import sys
+
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
 # tab of
 #   https://cloud.google.com/console
@@ -50,11 +52,12 @@ def youtube_search(keyword):#suppose that keyword is list type[]
 def makeGoogleHomeSpeech(youtubeURL):
     cmd = "youtube-dl -x -g --audio-format mp3 " + youtubeURL
     soundURL = subprocess.check_output(cmd.split()).decode()
-    casts = pychromecast.get_chromecasts()
-    if len(casts) == 0:
-        print("Counld't find google home device.Try again.")
-        sys.exit()
-    googlehome = casts[0]
+#    casts = pychromecast.get_chromecasts()
+#    if len(casts) == 0:
+#        print("Counld't find google home device.Try again.")
+#        sys.exit()
+#    googlehome = casts[0]
+    googlehome = pychromecast.Chromecast("192.168.11.3")
     mc = googlehome.media_controller
     mc.play_media(soundURL, "audio/mp3")
 
