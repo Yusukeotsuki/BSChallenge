@@ -8,12 +8,16 @@ import pychromecast
 import time
 import os
 from bottle import route, run
-from bottle import get, post, request
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
 # tab of
 #   https://cloud.google.com/console
 # Please ensure that you have enabled the YouTube Data API for your project.
+
+app = Flask(__name__)
+app.debug = True
+
+
 DEVELOPER_KEY = "AIzaSyDo7rPjc6eOCNUQ0Yzg3MM9vVhwnT2grsc"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
@@ -54,14 +58,19 @@ def makeGoogleHomeSpeech(youtubeURL):
     mc = googlehome.media_controller
     mc.play_media(soundURL, "audio/mp3")
 
-@route("/",method = "GET")
+@app.route("/")
 def doLogic():
-    keyword = request.query.get("keyword")
+    keyword = request.args.get("keyword","", type=str)
     result = youtube_search([keyword])
     makeGoogleHomeSpeech(result[0])
+    return render_template("music.html",title="test",keyword=keyword)
 
-run(host="localhost",port=8080,debug=True)
 
+#run(host="localhost",port=8080,debug=True)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT",5000))
+    app.run(port=port)
 """
 if __name__ == "__main__":
   try:
