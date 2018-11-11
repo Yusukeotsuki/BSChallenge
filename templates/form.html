@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head>
+<title>{{ title }}</title>
+<body>
+{% block content %}
+
+<form action = "/play " method = "POST">
+  <p> Name <input type = "text" name = "value1" /></p>
+  <p> <input type = "submit" value = "submit" /></p>
+</form>
+
+{% endblock %}
+</body>
+</head>
+

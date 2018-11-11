@@ -57,77 +57,33 @@ def get_info_from_url(youtubeURL):
     soundInfo= subprocess.check_output(cmd.split()).decode().split("\n")
     return soundInfo
 
+def make_googlehome_speech(CONNECTION_INFO, soundURL):
 
-class GoogleHomeController:
-    def __init__(self, CONNECTION_INFO):
-        googlehome = pychromecast.Chromecast(CONNECTION_INFO)
-        self.mc = googlehome.media_controller
+    googlehome = pychromecast.Chromecast(CONNECTION_INFO)
+    mc = googlehome.media_controller
+    mc.play_media(soundURL, "audio/mp3")
 
-    def play_googlehome(self, soundURL):
-        self.mc.play_media(soundURL,"audio/mp3")
+def calc_sec(str):
+    l = str.split(":")
+    if (len(l) == 1):
+        sec = int(l[0])
+    elif (len(l) == 2):
+        minites = int(l[0])
+        sec = minites*60 + int(l[1])
+    elif (len(l) == 3):
+        hour = int(l[0])
+        minites = int(l[1])
+        sec = int(l[2])
+        sec = 3600 * hour + 60 * minites + sec
 
-    def pause_googlehome(self):
-        self.mc.pause()
-
-
-    
-def calc_sec(str_time):
-    time = 0
-    count = 0
-    for item in reversed(str_time.split(":")):
-        time += int(item) * 60 ** count
-        count += 1
-    return time
-
-class MusicController:
-    def __init__(self, CONNECTION_INFO):
-        url_list = session.get("url_list")
-        l = []
-        for i, url in enumerate(url_list, 1):
-            keys = ["number", "url", "playFlag"]
-            values = [i, url, 0]
-            d = dict(zip(keys, values))
-            l.append(d)
-        self.l = l
-        self.googlehome = GoogleHomeController(CONNECTION_INFO)
-
-    def play_music(self,num):
-        l = self.l
-        soundInfo = get_info_from_url(l[num]["url"])
-        duration = calc_sec(soundInfo[1])
-        self.googlehome.play_googlehome(soundInfo[0])
-        # Flag change to "Now playing"
-        l[num]["playFlag"] = 1
-        # wait until music end
-        time.sleep(duration)
-        # Flag change to "Halting"
-        l[num]["playFlag"] = 0
-
-    def get_status(self):
-        return self.l
-
-
-
-
-
-"""
-CONSTRUCT instance
-"""
-googlehome = GoogleHomeController(CONNECTION_INFO)
+    return sec
 
 @app.route("/form")
 def form():
     return render_template("form.html")
+
 """
-@app.route("/search")
-def search():
-    if request.method == "POST":
-        keyword = str(json.loads(request.data.decode("UTF-8"))\
-                 ["queryResult"]["parameters"]["any"])
-    else:
-        keyword = "chopin"
-    url_list =  youtube_search[keyword]
-    session["url_list"] = url_list
+This is under construction
 """
 
 @app.route("/next", methods=["POST"])
@@ -136,18 +92,22 @@ def next_music():
 
 @app.route("/play", methods=["POST"])
 def play_music():
+    defaultURL = "https://www.youtube.com/watch?v="
     if request.method == "POST":
-        keyword = str(json.loads(request.data.decode("UTF-8"))\
-                 ["queryResult"]["parameters"]["any"])
+        keyword = request.data.decode("UTF-8")
+        print("##1##" + keyword + "\n")
+        keyword = json.loads(keyword)
+        print("##2##") 
+        print(keyword)
+        keyword = str(keyword["queryResult"]["parameters"]["any"])
+        print("##3##")
+        print(keyword)
     else:
         keyword = "chopin"
-    url_list =  youtube_search([keyword])
-    session["url_list"] = url_list
-
-    m = MusicController(CONNECTION_INFO)
-    m.play_music(0)
-
-
+    results = youtube_search([keyword])
+    session["url_list"] = results
+    soundInfo = get_info_from_url(defaultURL + results[0])
+    make_googlehome_speech(CONNECTION_INFO, soundInfo[0])
 
     return render_template("music.html", title="test", keyword=keyword)
 """
