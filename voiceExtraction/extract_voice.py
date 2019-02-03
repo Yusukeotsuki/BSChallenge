@@ -35,9 +35,7 @@ def extract_voice(infile_path, outfile_path):
         status = driver.find_element_by_id("dropbox").text
 
     url = driver.find_element_by_id("audio-vocal").get_attribute("src")
-    time.sleep(1)
     urllib.request.urlretrieve(url, outfile_path)
-    status = driver.find_element_by_id("dropbox").text
 
 for i in range(0,12):
     filepath = "/Users/yusukeotsuki/MyProject/BSchallenge/voiceExtraction/data/test/" + str(i) + ".wav"
