@@ -4,7 +4,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 import urllib.request
 import time
 
-filepath    = "data/input/******" + ".wav"
+filepath    = "data/test/"
 outfilename = "data/output/******" + ".wav"
 driver_path = "/Users/yusukeotsuki/Downloads/chromedriver"
 
@@ -12,7 +12,7 @@ driver= webdriver.Chrome(executable_path=driver_path)
 driver.get("http://unetvocalsep.herokuapp.com/")
 time.sleep(5)
 
-def extract_voice(infile_path, outfile_path)
+def extract_voice(infile_path, outfile_path):
     
     JS_DROP_FILE = "var tgt=arguments[0],e=document.createElement('input');e.type='"+\
     "file';e.addEventListener('change',function(event){var dataTrans" +\
@@ -28,9 +28,19 @@ def extract_voice(infile_path, outfile_path)
 
     tmp = driver.execute_script(JS_DROP_FILE, drop_area)
     tmp.send_keys(infile_path)
+    # check the status
+    status = driver.find_element_by_id("dropbox").text
+    while status == "Processing, please wait...":
+        time.sleep(3)
+        status = driver.find_element_by_id("dropbox").text
 
     url = driver.find_element_by_id("audio-vocal").get_attribute("src")
-    urllib.request.urlretrieve(url, outfilename)
+    time.sleep(1)
+    urllib.request.urlretrieve(url, outfile_path)
+    status = driver.find_element_by_id("dropbox").text
 
-extract_voice(filepath, outfilename)
+for i in range(0,12):
+    filepath = "/Users/yusukeotsuki/MyProject/BSchallenge/voiceExtraction/data/test/" + str(i) + ".wav"
+    outfilename = "/Users/yusukeotsuki/MyProject/BSchallenge/voiceExtraction/data/test_output/" + str(i) + ".wav"
+    extract_voice(filepath, outfilename)
 
