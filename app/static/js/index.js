@@ -47,3 +47,9 @@ var close = function() {
 
 button.on('click', open);
 stop.on('click', close);
+
+$('.txt').html(function(i, html) {
+  var chars = $.trim(html).split("");
+
+  return '<span>' + chars.join('</span><span>') + '</span>';
+});
