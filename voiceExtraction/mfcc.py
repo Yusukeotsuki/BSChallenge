@@ -51,6 +51,7 @@ data ----input----- --artist1-----music1--------------1.wav
 
 
 """
+calc_mfcc("1.wav", "1.png")
 cwd = os.getcwd()
 artists_list = os.listdir(cwd + "/data/input/")
 for artist in artists_list:
