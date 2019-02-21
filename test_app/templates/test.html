@@ -21,3 +21,127 @@
 <div class="container">
   <span class="txt anim-text-flow">How are you? Bacon ipsum dolor sit amet.</span>
 </div>
+
+
+<audio id="audio" controls></audio>
+<a id="download">Download
+
+<script>
+
+	var audioData = []; // 録音データ
+	var bufferSize =1024;
+
+	var context = new AudioContext();
+
+	//マイク機能の使用許可が出たときの処理
+	var handleSuccess = function(stream) {
+
+		var source = context.createMediaStreamSource(stream);
+
+		//処理を行うプロセッサーを出力先とするために作成する
+		var processor = context.createScriptProcessor(bufferSize,1,1);
+		//直接destinationに繋ぐとスピーカーからそのまま音が出てしまう
+		source.connect(processor);
+		processor.connect(context.destination);
+
+		//3秒間音を拾って録音する
+		timer = setTimeout(function () {
+			//接続の停止
+			processor.disconnect();
+			source.disconnect();
+
+			//取得した音声データをwavファイルに変換する
+			exportWAV(audioData);
+
+		}, 3000);
+
+		//1024bitのバッファサイズに達するごとにaudioDataにデータを追加する
+		processor.onaudioprocess = function(e){
+
+			var input = e.inputBuffer.getChannelData(0);
+			var bufferData = new Float32Array(bufferSize);
+				for (var i = 0; i < bufferSize; i++) {
+					bufferData[i] = input[i];
+				}
+			audioData.push(bufferData);
+		};
+	};
+
+
+	//マイクデバイスの利用許可の確認を行う
+	navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+	.then(handleSuccess)
+
+
+	//wavファイルを作成する
+	var exportWAV = function(audioData) {
+
+		var encodeWAV = function(samples, sampleRate) {
+			var buffer = new ArrayBuffer(44 + samples.length * 2);
+			var view = new DataView(buffer);
+
+			var writeString = function(view, offset, string) {
+				for (var i = 0; i < string.length; i++){
+					view.setUint8(offset + i, string.charCodeAt(i));
+				}
+			};
+
+			var floatTo16BitPCM = function(output, offset, input) {
+				for (var i = 0; i < input.length; i++, offset += 2){
+					var s = Math.max(-1, Math.min(1, input[i]));
+					output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+				}
+			};
+
+			writeString(view, 0, 'RIFF');  // RIFFヘッダ
+			view.setUint32(4, 32 + samples.length * 2, true); // これ以降のファイルサイズ
+			writeString(view, 8, 'WAVE'); // WAVEヘッダ
+			writeString(view, 12, 'fmt '); // fmtチャンク
+			view.setUint32(16, 16, true); // fmtチャンクのバイト数
+			view.setUint16(20, 1, true); // フォーマットID
+			view.setUint16(22, 1, true); // チャンネル数
+			view.setUint32(24, sampleRate, true); // サンプリングレート
+			view.setUint32(28, sampleRate * 2, true); // データ速度
+			view.setUint16(32, 2, true); // ブロックサイズ
+			view.setUint16(34, 16, true); // サンプルあたりのビット数
+			writeString(view, 36, 'data'); // dataチャンク
+			view.setUint32(40, samples.length * 2, true); // 波形データのバイト数
+			floatTo16BitPCM(view, 44, samples); // 波形データ
+
+			return view;
+		};
+
+		var mergeBuffers = function(audioData) {
+			var sampleLength = 0;
+				for (var i = 0; i < audioData.length; i++) {
+					sampleLength += audioData[i].length;
+				}
+			var samples = new Float32Array(sampleLength);
+			var sampleIdx = 0;
+				for (var i = 0; i < audioData.length; i++) {
+					for (var j = 0; j < audioData[i].length; j++) {
+						samples[sampleIdx] = audioData[i][j];
+						sampleIdx++;
+					}
+				}
+			return samples;
+		};
+
+		var dataview = encodeWAV(mergeBuffers(audioData), context.sampleRate);
+		//できあがったwavデータをBlobにする
+		var audioBlob = new Blob([dataview], { type: 'audio/wav' });
+
+		var downloadLink = document.getElementById('download');
+		//BlobへのアクセスURLをダウンロードリンクに設定する
+		downloadLink.href = URL.createObjectURL(audioBlob);
+		downloadLink.download = 'test.wav';
+
+		var audio = document.getElementById('audio');
+		//オーディオ要素にもBlobをリンクする
+		audio.src = URL.createObjectURL(audioBlob);
+		//音声を再生する
+		audio.play();
+        };
+
+
+</script>

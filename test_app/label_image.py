@@ -71,7 +71,7 @@ def load_labels(label_file):
     label.append(l.rstrip())
   return label
 
-def hoge():
+def prediction():
   file_name = "tensorflow/examples/label_image/data/grace_hopper.jpg"
   model_file = \
     "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb"
@@ -111,3 +111,4 @@ def hoge():
   labels = load_labels(label_file)
   for i in top_k:
     print(labels[i], results[i])
+  return labels, results
